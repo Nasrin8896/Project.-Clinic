@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini Invoice App</title>
+<style>
+body{font-family:sans-serif;padding:10px}
+table{border-collapse:collapse;width:100%;margin-top:10px}
+td,th{border:1px solid #555;padding:4px;text-align:left}
+</style>
+</head>
+<body>
+
+<h3>Stats</h3>
+<p>Clients: <span id="cCount">0</span> | Invoices: <span id="iCount">0</span> | Total: $<span id="total">0</span></p>
+
+<h3>Add Client</h3>
+<form id="cForm">
+<input id="cName" placeholder="Name" required>
+<input id="cEmail" placeholder="Email" required>
+<button>Add</button>
+</form>
+<table><thead><tr><th>Name</th><th>Email</th><th>Delete</th></tr></thead><tbody id="cTable"></tbody></table>
+
+<h3>Add Invoice</h3>
+<form id="iForm">
+<select id="cSelect" required></select>
+<input id="service" placeholder="Service" required>
+<input id="amount" type="number" placeholder="Amount" required>
+<button>Add</button>
+</form>
+<table><thead><tr><th>Client</th><th>Service</th><th>Amount</th><th>Status</th><th>Delete</th></tr></thead><tbody id="iTable"></tbody></table>
+
+<script>
+let clients=JSON.parse(localStorage.clients||'[]'),
+    invoices=JSON.parse(localStorage.invoices||'[]');
+
+function save(){localStorage.clients=JSON.stringify(clients);localStorage.invoices=JSON.stringify(invoices)}
+function stats(){
+ cCount.textContent=clients.length;
+ iCount.textContent=invoices.length;
+ total.textContent=invoices.reduce((t,i)=>t+i.amount,0);
+}
+function showClients(){
+ cTable.innerHTML=clients.map(c=>`<tr><td>${c.name}</td><td>${c.email}</td>
+<td><button onclick="delC(${c.id})">X</button></td></tr>`).join('');
+ cSelect.innerHTML='<option value="">Select</option>'+clients.map(c=>`<option>${c.name}</option>`).join('');
+}
+function showInvoices(){
+ iTable.innerHTML=invoices.map(i=>`<tr><td>${i.client}</td><td>${i.service}</td><td>$${i.amount}</td>
+<td><button onclick="pay(${i.id})">${i.paid?'Paid':'Unpaid'}</button></td>
+<td><button onclick="delI(${i.id})">X</button></td></tr>`).join('');
+}
+
+cForm.onsubmit=e=>{
+ e.preventDefault();
+ clients.push({id:Date.now(),name:cName.value,email:cEmail.value});
+ save();showClients();stats();e.target.reset();
+}
+iForm.onsubmit=e=>{
+ e.preventDefault();
+ invoices.push({id:Date.now(),client:cSelect.value,service:service.value,amount:+amount.value,paid:false});
+ save();showInvoices();stats();e.target.reset();
+}
+function delC(id){clients=clients.filter(c=>c.id!=id);save();showClients();stats()}
+function delI(id){invoices=invoices.filter(i=>i.id!=id);save();showInvoices();stats()}
+function pay(id){let f=invoices.find(i=>i.id==id);f.paid=!f.paid;save();showInvoices()}
+
+showClients();showInvoices();stats();
+</script>
+</body>
+</html>
